@@ -25,7 +25,7 @@ typedef struct
 	uint8_t samples_count ;
 }SWITCH;
 
-SWITCH sw = {.samples_mem = 0xFFFE ,.status = DE_BOUNCING } ;
+volatile SWITCH sw = {.status = DE_BOUNCING } ;
 #define read_pin(PORT,PIN) (PORT & (1<< (PIN)))
 
 void timer_init() ;
@@ -74,7 +74,7 @@ void timer_init()
 ISR(TIMER0_COMP_vect)
 {
 	/* 13 samples * 4.4ms = 57.2ms */
-	sw.samples_mem = (sw.samples_mem <<1) | (read_pin(PINA,0)>=1) |UNUSED_BITS;
+	sw.samples_mem = (sw.samples_mem <<1) | (read_pin(PINA,3)>=1) |UNUSED_BITS;
 	
 	/*Switch is pressed */
 	if(sw.samples_mem == UNUSED_BITS)
