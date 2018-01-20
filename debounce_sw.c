@@ -4,19 +4,18 @@
  * Created: 1/20/2018 12:34:11 AM
  *  Author: Islam
  */ 
-#define F_CPU 8000000UL
+#define F_CPU 1000000UL
 #include <stdio.h>
 #include <stdint.h>
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#include "uart.h"
-
 #define SAMPLES_NUM 13
+#define UNUSED_BITS ((uint16_t)(0xFFFF<<SAMPLES_NUM))
 #define ENABLED  1
 #define DISABLED 0
-#define DEBUG ENABLED
+#define DEBUG DISABLED
 typedef enum { PRESSED , RELEASED , DE_BOUNCING }SW_ST;
 
 typedef struct
@@ -26,14 +25,10 @@ typedef struct
 	uint8_t samples_count ;
 }SWITCH;
 
-SWITCH sw = {.status = DE_BOUNCING } ;
+SWITCH sw = {.samples_mem = 0xFFFE ,.status = DE_BOUNCING } ;
 #define read_pin(PORT,PIN) (PORT & (1<< (PIN)))
 
 void timer_init() ;
-
-#if DEBUG == ENABLED
-char debug_buff[51] ;
-#endif
 
 int main(void)
 {
@@ -43,21 +38,15 @@ int main(void)
 	DDRB = 0xFF ;
 		
 	timer_init() ;
-	Uart_init(9600) ;
+
 	uint8_t press_flag = 0 ;
 	
     while(1)
     {
-		
         if(sw.status == PRESSED && !press_flag)
 		{
-			#if DEBUG == ENABLED
-			Uart_Transimit_String("Switch is pressed\n") ;
 			press_flag = 1 ;
 			PORTC++;
-			sprintf(debug_buff,"PORTC = %d\n",PORTC);
-			Uart_Transimit_String(debug_buff) ;  
-			#endif
 		}
 		
 		if(sw.status == RELEASED  && press_flag)
@@ -66,7 +55,7 @@ int main(void)
 			//PORTC = 0 ;
 		}
 		
-	 PORTB++ ;
+	// PORTB++ ;
     }
 }
 
@@ -84,14 +73,11 @@ void timer_init()
 
 ISR(TIMER0_COMP_vect)
 {
-	#if DEBUG == ENABLED
-	   //  Uart_Transimit_String("ISR entered\n") ;
-	#endif
 	/* 13 samples * 4.4ms = 57.2ms */
-	sw.samples_mem = (sw.samples_mem <<1) | (read_pin(PINA,0)>1)| 0xE000 ;
+	sw.samples_mem = (sw.samples_mem <<1) | (read_pin(PINA,0)>=1) |UNUSED_BITS;
 	
 	/*Switch is pressed */
-	if(sw.samples_mem == 0xE000)
+	if(sw.samples_mem == UNUSED_BITS)
 	{
 		if(sw.samples_count++  == SAMPLES_NUM )
 		{
