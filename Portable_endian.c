@@ -2,10 +2,6 @@
 #include <stdint.h>
 
 typedef uint32_t U32 ;
-typedef struct
-{
-    uint8_t a,b,c,d ;
-}U32_2  , *U32_ptr;
 //#define LITTLE_ENDIAN
 #define BIG_ENDIAN
 
@@ -38,10 +34,4 @@ inline U32 littleTobig(U32 data)
     uint8_t *b =(uint8_t*) &data ;
 
     return ( b[3] | (b[2]<<8) | (b[1]<<16) | b[0]<<24 ) ;
-}
-
-inline U32 littleTobig2(U32 data)
-{
-    (U32_ptr)->a = (U32_ptr)->d ;
-    (U32_ptr)->b = (U32_ptr)->c ;
 }
