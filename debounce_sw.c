@@ -5,7 +5,7 @@
  *  Author: Islam
  */ 
 #define F_CPU 1000000UL
-#include <stdio.h>
+
 #include <stdint.h>
 
 #include <avr/io.h>
@@ -13,9 +13,6 @@
 
 #define SAMPLES_NUM 13
 #define UNUSED_BITS ((uint16_t)(0xFFFF<<SAMPLES_NUM))
-#define ENABLED  1
-#define DISABLED 0
-#define DEBUG DISABLED
 typedef enum { PRESSED , RELEASED , DE_BOUNCING }SW_ST;
 
 typedef struct
@@ -23,9 +20,11 @@ typedef struct
 	uint16_t samples_mem ;
 	SW_ST status ;
 	uint8_t samples_count ;
+	uint8_t pin_num ;
 }SWITCH;
 
-volatile SWITCH sw = {.status = DE_BOUNCING } ;
+volatile SWITCH sw = {.status = DE_BOUNCING , .pin_num = 3} ;
+	
 #define read_pin(PORT,PIN) (PORT & (1<< (PIN)))
 
 void timer_init() ;
@@ -74,7 +73,7 @@ void timer_init()
 ISR(TIMER0_COMP_vect)
 {
 	/* 13 samples * 4.4ms = 57.2ms */
-	sw.samples_mem = (sw.samples_mem <<1) | (read_pin(PINA,3)>=1) |UNUSED_BITS;
+	sw.samples_mem = (sw.samples_mem <<1) | (read_pin(PINA,sw.pin_num)>=1) |UNUSED_BITS;
 	
 	/*Switch is pressed */
 	if(sw.samples_mem == UNUSED_BITS)
